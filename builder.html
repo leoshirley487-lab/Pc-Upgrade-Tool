@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget PC Builder - PC Upgrade Picker</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  color: white;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+/* BACKDROP */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,\
+<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%233b82f6' stroke-width='1.2' opacity='0.08'>\
+<rect x='10' y='10' width='40' height='25' rx='3'/>\
+<circle cx='25' cy='60' r='8'/>\
+<rect x='70' y='20' width='30' height='20' rx='3'/>\
+<path d='M70 70 h30 v15 h-30z'/>\
+</svg>");
+  background-size: 180px 180px;
+  pointer-events: none;
+}
+
+/* NAV */
+nav {
+  background: #020617;
+  padding: 14px;
+  text-align: center;
+}
+
+nav a {
+  color: #94a3b8;
+  margin: 0 12px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* LAYOUT */
+.wrapper {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 520px;
+  background: #1e293b;
+  padding: 30px;
+  border-radius: 16px;
+}
+
+input, button, select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: none;
+}
+
+input, select { background: #0f172a; color: white; }
+button { background: #3b82f6; color: white; font-weight: bold; }
+
+</style>
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Upgrade Tool</a>
+  <a href="bottleneck.html">Bottleneck</a>
+  <a href="psu.html">PSU</a>
+  <a href="builder.html">Builder</a>
+  <a href="about.html">About</a>
+  <a href="privacy.html">Privacy</a>
+</nav>
+
+<div class="wrapper">
+<div class="container">
+
+<h1>Budget PC Builder</h1>
+
+<input id="budget" placeholder="Enter budget (£)">
+<select id="use">
+  <option value="gaming">Gaming</option>
+  <option value="balanced">Balanced</option>
+</select>
+
+<button onclick="build()">Build PC</button>
+
+<div id="output" style="margin-top:20px;"></div>
+
+</div>
+</div>
+
+<script>
+
+function build(){
+
+  const b = parseInt(budget.value);
+
+  if(!b){
+    output.innerHTML = "Enter a valid budget";
+    return;
+  }
+
+  let build = "";
+
+  /* LOW BUDGET */
+  if(b <= 500){
+    build = `
+    CPU: Ryzen 5 4500  
+    GPU: RX 6500 XT  
+    RAM: 16GB  
+    Storage: 500GB SSD  
+    PSU: 500W  
+    `;
+  }
+
+  /* MID BUDGET */
+  else if(b <= 900){
+    build = `
+    CPU: Ryzen 5 5600  
+    GPU: RTX 4060  
+    RAM: 16GB  
+    Storage: 1TB SSD  
+    PSU: 600W  
+    `;
+  }
+
+  /* HIGH BUDGET */
+  else if(b <= 1400){
+    build = `
+    CPU: Ryzen 5 7600  
+    GPU: RTX 4070  
+    RAM: 32GB  
+    Storage: 1TB SSD  
+    PSU: 700W  
+    `;
+  }
+
+  /* VERY HIGH */
+  else{
+    build = `
+    CPU: Ryzen 7 7800X3D  
+    GPU: RTX 4080  
+    RAM: 32GB  
+    Storage: 2TB SSD  
+    PSU: 850W  
+    `;
+  }
+
+  output.innerHTML =
+    "<b>Recommended Build:</b><br><br>" + build;
+}
+
+</script>
+
+</body>
+</html>
