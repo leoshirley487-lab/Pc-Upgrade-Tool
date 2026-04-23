@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottleneck Calculator - PC Upgrade Picker</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  color: white;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  position: relative;
+}
+
+/* BACKDROP (FIXED CLICK ISSUE) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,\
+<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%233b82f6' stroke-width='1.2' opacity='0.08'>\
+<rect x='10' y='10' width='40' height='25' rx='3'/>\
+<circle cx='25' cy='60' r='8'/>\
+<rect x='70' y='20' width='30' height='20' rx='3'/>\
+<path d='M70 70 h30 v15 h-30z'/>\
+</svg>");
+  background-size: 180px 180px;
+  pointer-events: none; /* 🔥 THIS FIXES CLICKS */
+  z-index: 0;
+}
+
+/* NAV */
+nav {
+  background: #020617;
+  padding: 14px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+nav a {
+  color: #94a3b8;
+  margin: 0 12px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* LAYOUT */
+.wrapper {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.container {
+  width: 100%;
+  max-width: 520px;
+  background: #1e293b;
+  padding: 30px;
+  border-radius: 16px;
+}
+
+/* INPUTS */
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: none;
+}
+
+input { background: #0f172a; color: white; }
+button { background: #3b82f6; color: white; font-weight: bold; }
+
+/* BAR */
+.bar {
+  height: 20px;
+  background: #334155;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.fill {
+  height: 100%;
+  width: 0%;
+  background: #3b82f6;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Upgrade Tool</a>
+  <a href="bottleneck.html">Bottleneck</a>
+  <a href="psu.html">PSU</a>
+  <a href="builder.html">Builder</a>
+  <a href="about.html">About</a>
+  <a href="privacy.html">Privacy</a>
+</nav>
+
+<div class="wrapper">
+<div class="container">
+
+<h1>Bottleneck Calculator</h1>
+
+<input id="cpu" placeholder="CPU (e.g. i5 14400F)">
+<input id="gpu" placeholder="GPU (e.g. RTX 3060)">
+<input id="ram" placeholder="RAM (GB)">
+
+<button onclick="calculate()">Calculate</button>
+
+<div id="result" style="margin-top:20px;"></div>
+<div class="bar"><div id="barFill" class="fill"></div></div>
+
+</div>
+</div>
+
+<script>
+
+/* CPU */
+function cpuScore(v){
+  v = (v||"").toLowerCase();
+
+  if(v.includes("i")){
+    const num = parseInt(v.match(/(\d{4,5})/)?.[1]);
+    if(!num) return null;
+
+    let gen = Math.floor(num/1000);
+    let tier = v.includes("i9")?4:v.includes("i7")?3:v.includes("i5")?2:1;
+
+    return Math.min(100,(gen*7)+(tier*12)+(gen>=12?10:0));
+  }
+
+  if(v.includes("ryzen")){
+    const num = parseInt(v.match(/(\d{4})/)?.[1]);
+    if(!num) return null;
+
+    let gen = Math.floor(num/1000);
+    let tier = v.includes("9")?4:v.includes("7")?3:v.includes("5")?2:1;
+
+    return Math.min(100,(gen*8)+(tier*12)+(gen>=5?10:0));
+  }
+
+  return null;
+}
+
+/* GPU */
+function gpuScore(v){
+  v = (v||"").toLowerCase();
+
+  const num = parseInt(v.match(/(\d{3,4})/)?.[1]);
+  if(!num) return null;
+
+  let tier = v.includes("90")||v.includes("xtx")?4:
+             v.includes("80")||v.includes("xt")?3:
+             v.includes("70")?2:1;
+
+  if(v.includes("rtx")||v.includes("gtx")){
+    return Math.min(100,(num/50)+(tier*14)+(num>=4000?15:0));
+  }
+
+  if(v.includes("rx")){
+    return Math.min(100,(num/60)+(tier*14)+(num>=7000?15:0));
+  }
+
+  if(v.includes("arc")){
+    if(v.includes("a770")) return 75;
+    if(v.includes("a750")) return 70;
+    return 60;
+  }
+
+  return null;
+}
+
+/* RAM */
+function ramScore(r,c,g){
+  const val = parseInt(r);
+  if(!val) return null;
+
+  const power = Math.max(c,g);
+
+  if(power >= 90){
+    if(val >= 32) return 95;
+    if(val >= 16) return 70;
+    return 25;
+  }
+
+  if(power >= 75){
+    if(val >= 16) return 85;
+    return 45;
+  }
+
+  return val >= 16 ? 90 : 65;
+}
+
+/* MAIN */
+function calculate(){
+
+  const c = cpuScore(cpu.value);
+  const g = gpuScore(gpu.value);
+  const r = ramScore(ram.value,c,g);
+
+  if(!c || !g || !r){
+    result.innerHTML = "Not recognised (use full names)";
+    return;
+  }
+
+  const parts = [
+    {n:"CPU",s:c},
+    {n:"GPU",s:g},
+    {n:"RAM",s:r}
+  ];
+
+  parts.sort((a,b)=>a.s-b.s);
+
+  const weakest = parts[0];
+  const strongest = parts[2];
+
+  let diff = strongest.s - weakest.s;
+  diff = Math.min(95, Math.round(diff * 1.2));
+
+  let severity =
+    diff<10?"Perfectly balanced":
+    diff<25?"Minor bottleneck":
+    diff<45?"Moderate bottleneck":
+    "Severe bottleneck";
+
+  barFill.style.width = diff + "%";
+
+  result.innerHTML =
+    "<b>" + weakest.n + " Bottleneck</b><br>" +
+    "Impact: " + diff + "%<br>" +
+    severity;
+}
+
+</script>
+
+</body>
+</html>
