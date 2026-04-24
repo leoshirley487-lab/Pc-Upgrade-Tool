@@ -9,29 +9,41 @@
 body {
   margin: 0;
   font-family: Arial;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
   color: white;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+/* BACKDROP */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,\
+<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%233b82f6' stroke-width='1.2' opacity='0.08'>\
+<rect x='10' y='10' width='40' height='25' rx='3'/>\
+<circle cx='25' cy='60' r='8'/>\
+<rect x='70' y='20' width='30' height='20' rx='3'/>\
+<path d='M70 70 h30 v15 h-30z'/>\
+</svg>");
+  background-size: 180px 180px;
+  pointer-events: none;
 }
 
 /* NAV */
 nav {
-  height: 60px;
   background: #020617;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+  padding: 14px;
+  text-align: center;
 }
 
 nav a {
   color: #94a3b8;
+  margin: 0 12px;
   text-decoration: none;
   font-weight: bold;
 }
 
-nav a:hover { color: white; }
-
-/* CENTER */
+/* LAYOUT */
 .wrapper {
   min-height: calc(100vh - 60px);
   display: flex;
@@ -47,6 +59,7 @@ nav a:hover { color: white; }
   border-radius: 16px;
 }
 
+/* INPUTS */
 input, button {
   width: 100%;
   padding: 12px;
@@ -58,7 +71,7 @@ input, button {
 input { background: #0f172a; color: white; }
 button { background: #3b82f6; color: white; font-weight: bold; }
 
-/* BARS */
+/* BAR */
 .bar {
   height: 18px;
   background: #334155;
@@ -72,37 +85,14 @@ button { background: #3b82f6; color: white; font-weight: bold; }
   width: 0%;
   background: #3b82f6;
 }
-
-/* AUTOCOMPLETE */
-.suggestions {
-  position: absolute;
-  width: 100%;
-  background: #0f172a;
-  border-radius: 8px;
-  max-height: 150px;
-  overflow-y: auto;
-  z-index: 10;
-}
-
-.suggestions div {
-  padding: 10px;
-  cursor: pointer;
-}
-
-.suggestions div:hover {
-  background: #1e293b;
-}
 </style>
 </head>
 
 <body>
 
 <nav>
-  <a href="index.html">Home</a>
-  <a href="tool.html">Upgrade Tool</a>
+  <a href="index.html">Tool</a>
   <a href="bottleneck.html">Bottleneck</a>
-  <a href="psu.html">PSU</a>
-  <a href="builder.html">Builder</a>
   <a href="about.html">About</a>
   <a href="privacy.html">Privacy</a>
 </nav>
@@ -112,16 +102,8 @@ button { background: #3b82f6; color: white; font-weight: bold; }
 
 <h1>PC Upgrade Picker</h1>
 
-<div style="position:relative;">
-  <input id="cpu" oninput="suggestCPU()" placeholder="CPU">
-  <div id="cpuList" class="suggestions"></div>
-</div>
-
-<div style="position:relative;">
-  <input id="gpu" oninput="suggestGPU()" placeholder="GPU">
-  <div id="gpuList" class="suggestions"></div>
-</div>
-
+<input id="cpu" placeholder="CPU (e.g. i5 10400)">
+<input id="gpu" placeholder="GPU (e.g. RTX 3060)">
 <input id="ram" placeholder="RAM (GB)">
 <input id="budget" placeholder="Budget £">
 
@@ -135,6 +117,7 @@ button { background: #3b82f6; color: white; font-weight: bold; }
   <div class="bar"><div id="afterBar" class="fill"></div></div>
 
   <div id="textOutput" style="margin-top:15px;"></div>
+  <div id="pathOutput" style="margin-top:15px;"></div>
 </div>
 
 </div>
@@ -142,77 +125,100 @@ button { background: #3b82f6; color: white; font-weight: bold; }
 
 <script>
 
-/* CPU SCORE (IMPROVED) */
+/* CPU */
 function cpuScore(v){
   v = (v||"").toLowerCase();
   const num = parseInt(v.match(/(\d{4,5})/)?.[1]);
   if(!num) return null;
 
   let gen = Math.floor(num/1000);
+  let tier = v.includes("i9")||v.includes("9")?4:
+             v.includes("i7")||v.includes("7")?3:
+             v.includes("i5")||v.includes("5")?2:1;
 
-  let tier = 1;
-  if(v.includes("i9") || v.includes("9")) tier = 4;
-  else if(v.includes("i7") || v.includes("7")) tier = 3;
-  else if(v.includes("i5") || v.includes("5")) tier = 2;
-
-  return Math.min(100, (gen*6)+(tier*8));
+  return Math.min(100,(gen*7)+(tier*10));
 }
 
-/* GPU SCORE */
+/* GPU */
 function gpuScore(v){
   v = (v||"").toLowerCase();
   const num = parseInt(v.match(/(\d{3,4})/)?.[1]);
   if(!num) return null;
 
-  let tier = 1;
-  if(v.includes("90")) tier = 4;
-  else if(v.includes("80")) tier = 3;
-  else if(v.includes("70")) tier = 2;
+  let tier = v.includes("90")||v.includes("xtx")?4:
+             v.includes("80")||v.includes("xt")?3:
+             v.includes("70")?2:1;
 
-  return Math.min(100, (num/60)+(tier*10));
+  return Math.min(100,(num/55)+(tier*12));
 }
 
 /* RAM */
-function ramScore(r){
+function ramScore(r,c,g){
   const val = parseInt(r);
   if(!val) return null;
-  if(val >= 32) return 95;
-  if(val >= 16) return 75;
-  return 50;
+
+  const power = Math.max(c,g);
+
+  if(power >= 85){
+    if(val >= 32) return 95;
+    if(val >= 16) return 70;
+    return 30;
+  }
+
+  return val >= 16 ? 85 : 60;
 }
 
-function avg(a,b,c){ return Math.round((a+b+c)/3); }
+/* AVG */
+function avg(a,b,c){
+  return Math.round((a+b+c)/3);
+}
 
-function simulateUpgrade(part,c,g,r){
+/* UPGRADE SIM */
+function simulate(part,c,g,r){
   if(part==="CPU") return avg(95,g,r);
   if(part==="GPU") return avg(c,95,r);
-  if(part==="RAM") return avg(c,g,95);
+  if(part==="RAM") return avg(c,g,90);
 }
 
-/* UPGRADE SYSTEM (FIXED) */
-function getUpgrade(part, score, budget){
+/* RECOMMEND */
+function recommend(part,b){
+  b = parseInt(b)||0;
 
-  if(score >= 90) return "No upgrade needed";
-
-  budget = parseInt(budget)||0;
-
-  if(part === "GPU"){
-    if(budget >= 800) return "RTX 5080 / 5090";
-    if(budget >= 500) return "RTX 5070 / 5080";
-    if(budget >= 300) return "RTX 4060 / 5060";
-    return "Better GPU";
+  if(part==="RAM"){
+    return b>=120?"32GB RAM":"16GB RAM";
   }
 
-  if(part === "CPU"){
-    if(budget >= 500) return "i7 / Ryzen 7 (latest gen)";
-    if(budget >= 300) return "i5 / Ryzen 5";
-    return "Newer CPU";
+  if(part==="GPU"){
+    if(b>=500) return "RTX 4070 / RX 7800 XT";
+    if(b>=300) return "RTX 4060 / RX 7600";
+    return "Entry GPU upgrade";
   }
 
-  if(part === "RAM"){
-    if(score >= 85) return "No upgrade needed";
-    return "Upgrade to 32GB RAM";
+  if(part==="CPU"){
+    if(b>=300) return "Modern i5 / Ryzen 5";
+    return "Newer CPU generation";
   }
+}
+
+/* UPGRADE PATH */
+function upgradePath(c,g,r,b){
+
+  let steps = [];
+
+  let parts = [
+    {n:"CPU",s:c},
+    {n:"GPU",s:g},
+    {n:"RAM",s:r}
+  ];
+
+  parts.sort((a,b)=>a.s-b.s);
+
+  for(let i=0;i<3;i++){
+    const p = parts[i].n;
+    steps.push("Step " + (i+1) + ": Upgrade " + p + " → " + recommend(p,b));
+  }
+
+  return steps.join("<br>");
 }
 
 /* MAIN */
@@ -220,12 +226,14 @@ function analyze(){
 
   const c = cpuScore(cpu.value);
   const g = gpuScore(gpu.value);
-  const r = ramScore(ram.value);
+  const r = ramScore(ram.value,c,g);
 
   if(!c || !g || !r){
-    textOutput.innerHTML = "Parts not recognised";
+    textOutput.innerHTML = "Not recognised";
     return;
   }
+
+  const before = avg(c,g,r);
 
   const parts = [
     {n:"CPU",s:c},
@@ -234,61 +242,20 @@ function analyze(){
   ];
 
   parts.sort((a,b)=>a.s-b.s);
+  const weak = parts[0].n;
 
-  const before = avg(c,g,r);
-  const after = simulateUpgrade(parts[0].n,c,g,r);
+  const after = simulate(weak,c,g,r);
 
   beforeBar.style.width = before + "%";
   afterBar.style.width = after + "%";
 
   textOutput.innerHTML =
-    "<b>Upgrade Priority:</b><br>" +
-    "1. " + parts[0].n + " → " + getUpgrade(parts[0].n, parts[0].s, budget.value) + "<br>" +
-    "2. " + parts[1].n + " → Consider upgrading later<br>" +
-    "3. " + parts[2].n + " → Lowest priority";
-}
+    "<b>Weakest Part:</b> " + weak +
+    "<br><b>Upgrade:</b> " + recommend(weak,budget.value);
 
-/* AUTOCOMPLETE (EXPANDED) */
-const cpus = [
-  "i3 10100","i3 12100F","i3 13100F",
-  "i5 10400","i5 12400F","i5 13400F","i5 14400F",
-  "i7 10700K","i7 12700K","i7 14700K",
-  "i9 11900K","i9 13900K","i9 14900K",
-  "Ryzen 3 3100","Ryzen 5 3600","Ryzen 5 5600","Ryzen 5 7600",
-  "Ryzen 7 3700X","Ryzen 7 5800X","Ryzen 7 7800X3D",
-  "Ryzen 9 5900X","Ryzen 9 7950X"
-];
-
-const gpus = [
-  "GTX 970","GTX 1060",
-  "RTX 2060","RTX 3060","RTX 4060","RTX 5060",
-  "RTX 5070","RTX 5080","RTX 5090",
-  "RX 580","RX 6600","RX 7600","RX 8600",
-  "RX 8800 XT","RX 8900 XTX"
-];
-
-function suggestCPU(){
-  const input = cpu.value.toLowerCase();
-  cpuList.innerHTML="";
-  cpus.filter(x=>x.toLowerCase().includes(input)).slice(0,6)
-  .forEach(x=>{
-    const d=document.createElement("div");
-    d.innerText=x;
-    d.onclick=()=>{cpu.value=x;cpuList.innerHTML="";};
-    cpuList.appendChild(d);
-  });
-}
-
-function suggestGPU(){
-  const input = gpu.value.toLowerCase();
-  gpuList.innerHTML="";
-  gpus.filter(x=>x.toLowerCase().includes(input)).slice(0,6)
-  .forEach(x=>{
-    const d=document.createElement("div");
-    d.innerText=x;
-    d.onclick=()=>{gpu.value=x;gpuList.innerHTML="";};
-    gpuList.appendChild(d);
-  });
+  pathOutput.innerHTML =
+    "<br><b>Upgrade Path:</b><br>" +
+    upgradePath(c,g,r,budget.value);
 }
 
 </script>
