@@ -86,6 +86,25 @@ button { background: #3b82f6; color: white; font-weight: bold; }
   width: 0%;
   background: #3b82f6;
 }
+.suggestions {
+  position: absolute;
+  width: 100%;
+  background: #0f172a;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.suggestions div {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestions div:hover {
+  background: #1e293b;
+}
 </style>
 </head>
 
@@ -106,8 +125,15 @@ button { background: #3b82f6; color: white; font-weight: bold; }
 
 <h1>PC Upgrade Picker</h1>
 
-<input id="cpu" placeholder="CPU (e.g. i5 10400)">
-<input id="gpu" placeholder="GPU (e.g. RTX 3060)">
+<div style="position:relative;">
+  <input id="cpu" oninput="suggestCPU()" placeholder="CPU">
+  <div id="cpuList" class="suggestions"></div>
+</div>
+
+<div style="position:relative;">
+  <input id="gpu" oninput="suggestGPU()" placeholder="GPU">
+  <div id="gpuList" class="suggestions"></div>
+</div>
 <input id="ram" placeholder="RAM (GB)">
 <input id="budget" placeholder="Budget £">
 
@@ -261,7 +287,63 @@ function analyze(){
     "<br><b>Upgrade Path:</b><br>" +
     upgradePath(c,g,r,budget.value);
 }
+const cpus = [
+  "i3 12100F","i5 12400F","i5 13400F","i5 14400F",
+  "i7 12700K","i7 14700K","i9 14900K",
+  "Ryzen 5 5600","Ryzen 5 7600","Ryzen 5 8600X",
+  "Ryzen 7 7700","Ryzen 7 8700X","Ryzen 9 7950X"
+];
 
+const gpus = [
+  "GTX 970","GTX 1060",
+  "RTX 2060","RTX 3060","RTX 4060","RTX 5060",
+  "RTX 5070","RTX 5080","RTX 5090",
+  "RX 580","RX 6600","RX 7600","RX 8600",
+  "RX 8800 XT","RX 8900 XTX"
+];
+
+function suggestCPU(){
+  const input = document.getElementById("cpu").value.toLowerCase();
+  const box = document.getElementById("cpuList");
+  box.innerHTML = "";
+
+  if(!input) return;
+
+  cpus
+    .filter(c => c.toLowerCase().includes(input))
+    .slice(0,5)
+    .forEach(c => {
+      const div = document.createElement("div");
+      div.innerText = c;
+      div.onclick = () => {
+        document.getElementById("cpu").value = c;
+        box.innerHTML = "";
+      };
+      box.appendChild(div);
+    });
+}
+
+function suggestGPU(){
+  const input = document.getElementById("gpu").value.toLowerCase();
+  const box = document.getElementById("gpuList");
+  box.innerHTML = "";
+
+  if(!input) return;
+
+  gpus
+    .filter(g => g.toLowerCase().includes(input))
+    .slice(0,5)
+    .forEach(g => {
+      const div = document.createElement("div");
+      div.innerText = g;
+      div.onclick = () => {
+        document.getElementById("gpu").value = g;
+        box.innerHTML = "";
+      };
+      box.appendChild(div);
+    });
+}
+  
 </script>
 
 </body>
