@@ -39,9 +39,7 @@ nav a {
   font-weight: bold;
 }
 
-nav a:hover {
-  color: white;
-}
+nav a:hover { color: white; }
 
 /* LAYOUT */
 .wrapper {
@@ -182,19 +180,48 @@ function gpuScore(v){
   return Math.min(100, (num/60)+(tier*10));
 }
 
-/* RAM */
-function ramScore(r,c,g){
+/* RAM SCORE */
+function ramScore(r){
   const val = parseInt(r);
   if(!val) return null;
-  return val >= 32 ? 90 : val >= 16 ? 70 : 50;
+  if(val >= 32) return 95;
+  if(val >= 16) return 75;
+  return 50;
 }
 
 function avg(a,b,c){ return Math.round((a+b+c)/3); }
 
-function upgradeSim(part,c,g,r){
-  if(part==="RAM") return avg(c,g,90);
-  if(part==="GPU") return avg(c,95,r);
+/* UPGRADE SIM */
+function simulateUpgrade(part,c,g,r){
   if(part==="CPU") return avg(95,g,r);
+  if(part==="GPU") return avg(c,95,r);
+  if(part==="RAM") return avg(c,g,95);
+}
+
+/* SMART UPGRADE CHAIN */
+function getUpgrade(part, score, budget){
+
+  if(score >= 90){
+    return "No upgrade needed";
+  }
+
+  if(part === "GPU"){
+    if(budget >= 800) return "RTX 5080 / 5090";
+    if(budget >= 500) return "RTX 5070 / 5080";
+    if(budget >= 300) return "RTX 4060 / 5060";
+    return "Upgrade GPU";
+  }
+
+  if(part === "CPU"){
+    if(budget >= 500) return "High-end i7 / Ryzen 7";
+    if(budget >= 300) return "Modern i5 / Ryzen 5";
+    return "Upgrade CPU";
+  }
+
+  if(part === "RAM"){
+    if(score >= 85) return "No upgrade needed";
+    return "Upgrade to 32GB RAM";
+  }
 }
 
 /* MAIN */
@@ -202,7 +229,7 @@ function analyze(){
 
   const c = cpuScore(cpu.value);
   const g = gpuScore(gpu.value);
-  const r = ramScore(ram.value,c,g);
+  const r = ramScore(ram.value);
 
   if(!c || !g || !r){
     textOutput.innerHTML = "Parts not recognised";
@@ -216,47 +243,31 @@ function analyze(){
   ];
 
   parts.sort((a,b)=>a.s-b.s);
-  const weak = parts[0].n;
-  const weakScore = parts[0].s;
+
+  const weak = parts[0];
+  const second = parts[1];
+  const third = parts[2];
 
   const before = avg(c,g,r);
-  const after = upgradeSim(weak,c,g,r);
+  const after = simulateUpgrade(weak.n,c,g,r);
 
   beforeBar.style.width = before + "%";
   afterBar.style.width = after + "%";
 
-  /* FIXED UPGRADE LOGIC */
-  let upgradeText;
+  /* UPGRADE ORDER */
+  let text =
+    "<b>Upgrade Priority:</b><br>" +
+    "1. " + weak.n + " → " + getUpgrade(weak.n, weak.s, budget.value) + "<br>" +
+    "2. " + second.n + "<br>" +
+    "3. " + third.n;
 
-  if(weak === "GPU" && g >= 90){
-    upgradeText = "No upgrade needed";
-  }
-  else if(weak === "CPU" && c >= 90){
-    upgradeText = "No upgrade needed";
-  }
-  else if(weak === "RAM" && parseInt(ram.value) >= 32){
-    upgradeText = "No upgrade needed";
-  }
-  else if(weak === "GPU"){
-    upgradeText = "Upgrade GPU (e.g. RTX 5070 / 5080)";
-  }
-  else if(weak === "CPU"){
-    upgradeText = "Upgrade CPU (modern Ryzen 5 / i5 or better)";
-  }
-  else{
-    upgradeText = "Upgrade RAM to 32GB";
-  }
-
-  textOutput.innerHTML =
-    "<b>Weakest Part:</b> " + weak +
-    "<br><b>Upgrade:</b> " + upgradeText;
+  textOutput.innerHTML = text;
 }
 
-/* AUTOCOMPLETE DATA */
+/* AUTOCOMPLETE */
 const cpus = ["i5 12400F","i5 14400F","i7 14700K","i9 14900K","Ryzen 5 7600","Ryzen 7 7800X3D"];
 const gpus = ["RTX 3060","RTX 4060","RTX 5060","RTX 5070","RTX 5080","RTX 5090"];
 
-/* AUTOCOMPLETE */
 function suggestCPU(){
   const input = cpu.value.toLowerCase();
   cpuList.innerHTML="";
