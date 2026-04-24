@@ -6,8 +6,6 @@
 <title>Budget PC Builder</title>
 
 <style>
-
-/* RESET */
 * { box-sizing: border-box; }
 
 /* BODY */
@@ -26,18 +24,12 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,\
-<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%233b82f6' stroke-width='1.2' opacity='0.08'>\
-<rect x='10' y='10' width='40' height='25' rx='3'/>\
-<circle cx='25' cy='60' r='8'/>\
-<rect x='70' y='20' width='30' height='20' rx='3'/>\
-<path d='M70 70 h30 v15 h-30z'/>\
-</svg>");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%233b82f6' stroke-width='1.2' opacity='0.08'%3E%3Crect x='10' y='10' width='40' height='25' rx='3'/%3E%3Ccircle cx='25' cy='60' r='8'/%3E%3Crect x='70' y='20' width='30' height='20' rx='3'/%3E%3Cpath d='M70 70 h30 v15 h-30z'/%3E%3C/svg%3E");
   background-size: 180px 180px;
   pointer-events: none;
 }
 
-/* NAV */
+/* NAV (STANDARDISED) */
 nav {
   height: 60px;
   background: #020617;
@@ -45,6 +37,7 @@ nav {
   align-items: center;
   justify-content: center;
   gap: 16px;
+  flex-shrink: 0;
 }
 
 nav a {
@@ -93,6 +86,7 @@ button {
   background: #3b82f6;
   color: white;
   font-weight: bold;
+  cursor: pointer;
 }
 
 /* OUTPUT */
@@ -105,7 +99,6 @@ button {
 @media (max-width: 600px){
   .container { padding: 20px; }
 }
-
 </style>
 </head>
 
@@ -135,10 +128,10 @@ button {
 </div>
 
 <script>
-
 function build(){
 
-  const b = parseInt(budget.value);
+  const b = parseInt(document.getElementById("budget").value);
+  const output = document.getElementById("output");
 
   if(!b){
     output.innerHTML = "Enter a valid budget";
@@ -147,64 +140,58 @@ function build(){
 
   let cpu, gpu, ram, storage, psu, extra;
 
-  /* ENTRY */
   if(b <= 600){
-    cpu = "Ryzen 5 5500 / i3 12100F";
+    cpu = "Ryzen 5 5600 / i3 13100F";
     gpu = "RTX 3060 / RX 6600";
     ram = "16GB DDR4";
     storage = "1TB SSD";
     psu = "550W PSU";
-    extra = "Basic motherboard + budget case";
+    extra = "Basic motherboard + case";
   }
 
-  /* LOW-MID */
   else if(b <= 900){
-    cpu = "Ryzen 5 5600 / i5 12400F";
+    cpu = "Ryzen 5 7600 / i5 13400F";
     gpu = "RTX 4060 / RX 7600";
-    ram = "16GB DDR4";
+    ram = "16GB DDR5";
     storage = "1TB NVMe SSD";
     psu = "600W PSU";
-    extra = "B550/B660 motherboard + airflow case";
+    extra = "DDR5 motherboard";
   }
 
-  /* MID (NEW GEN START) */
   else if(b <= 1300){
-    cpu = "Ryzen 5 7600 / i5 13400F";
-    gpu = "RTX 5060 / RX 8600 XT";
+    cpu = "Ryzen 5 8600X / i5 14400F";
+    gpu = "RTX 5060 / RX 8600";
     ram = "32GB DDR5";
     storage = "1TB NVMe SSD";
     psu = "650W PSU";
-    extra = "DDR5 platform + decent cooling";
+    extra = "Good cooling + airflow case";
   }
 
-  /* UPPER MID */
   else if(b <= 1800){
-    cpu = "Ryzen 7 7700 / i5 14600K";
+    cpu = "Ryzen 7 8700X / i5 14600K";
     gpu = "RTX 5070 / RX 8800 XT";
     ram = "32GB DDR5";
     storage = "2TB NVMe SSD";
     psu = "750W PSU";
-    extra = "High airflow case + strong cooling";
+    extra = "High airflow + strong cooling";
   }
 
-  /* HIGH END */
   else if(b <= 2500){
-    cpu = "Ryzen 7 7800X3D / i7 14700K";
+    cpu = "Ryzen 7 8800X3D / i7 14700K";
     gpu = "RTX 5080 / RX 8900 XTX";
     ram = "32GB DDR5";
     storage = "2TB NVMe SSD";
     psu = "850W PSU";
-    extra = "Premium motherboard + AIO cooling";
+    extra = "Premium build quality";
   }
 
-  /* ENTHUSIAST */
   else{
-    cpu = "Ryzen 9 7950X3D / i9 14900K";
+    cpu = "Ryzen 9 8950X / i9 14900KS";
     gpu = "RTX 5090";
     ram = "64GB DDR5";
-    storage = "2TB–4TB NVMe SSD";
+    storage = "4TB NVMe SSD";
     psu = "1000W PSU";
-    extra = "Top-tier components + premium cooling";
+    extra = "Top-tier everything";
   }
 
   output.innerHTML =
@@ -217,7 +204,6 @@ function build(){
     "Other: " + extra +
     "<br><br><i>Prices are estimated and may slightly exceed budget.</i>";
 }
-
 </script>
 
 </body>
