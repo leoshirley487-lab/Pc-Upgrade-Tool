@@ -1,17 +1,24 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PC Upgrade Picker</title>
+<title>PC Tool Hub</title>
 
 <style>
+
+/* RESET */
+* { box-sizing: border-box; }
+
+/* BODY */
 body {
   margin: 0;
   font-family: Arial;
   color: white;
   background: linear-gradient(135deg, #0f172a, #1e293b);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* BACKDROP */
@@ -32,67 +39,79 @@ body::before {
 
 /* NAV */
 nav {
+  height: 60px;
   background: #020617;
-  padding: 14px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
 nav a {
   color: #94a3b8;
-  margin: 0 12px;
   text-decoration: none;
   font-weight: bold;
 }
 
-/* LAYOUT */
+nav a:hover {
+  color: white;
+}
+
+/* CENTER */
 .wrapper {
-  min-height: calc(100vh - 60px);
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
+/* BOX */
 .container {
   width: 100%;
   max-width: 520px;
   background: #1e293b;
   padding: 30px;
   border-radius: 16px;
+  text-align: center;
 }
 
-/* INPUTS */
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 8px;
-  border: none;
+/* BUTTON GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 20px;
 }
 
-input { background: #0f172a; color: white; }
-button { background: #3b82f6; color: white; font-weight: bold; }
-
-/* BAR */
-.bar {
-  height: 18px;
-  background: #334155;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 5px;
-}
-
-.fill {
-  height: 100%;
-  width: 0%;
+.tool-btn {
+  display: block;
+  padding: 14px;
   background: #3b82f6;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  transition: 0.2s;
 }
+
+.tool-btn:hover {
+  background: #2563eb;
+}
+
+/* MOBILE */
+@media (max-width: 600px){
+  .container { padding: 20px; }
+}
+
 </style>
 </head>
 
 <body>
 
 <nav>
-  <a href="index.html">Upgrade Tool</a>
+  <a href="index.html">Home</a>
+  <a href="tool.html">Upgrade Tool</a>
   <a href="bottleneck.html">Bottleneck</a>
   <a href="psu.html">PSU</a>
   <a href="builder.html">Builder</a>
@@ -103,165 +122,19 @@ button { background: #3b82f6; color: white; font-weight: bold; }
 <div class="wrapper">
 <div class="container">
 
-<h1>PC Upgrade Picker</h1>
+<h1>PC Tool Hub</h1>
 
-<input id="cpu" placeholder="CPU (e.g. i5 10400)">
-<input id="gpu" placeholder="GPU (e.g. RTX 3060)">
-<input id="ram" placeholder="RAM (GB)">
-<input id="budget" placeholder="Budget £">
+<p>Analyse your PC, find bottlenecks, and get upgrade recommendations instantly.</p>
 
-<button onclick="analyze()">Analyse</button>
-
-<div style="margin-top:20px;">
-  <div>Performance Before</div>
-  <div class="bar"><div id="beforeBar" class="fill"></div></div>
-
-  <div style="margin-top:10px;">Performance After</div>
-  <div class="bar"><div id="afterBar" class="fill"></div></div>
-
-  <div id="textOutput" style="margin-top:15px;"></div>
-  <div id="pathOutput" style="margin-top:15px;"></div>
+<div class="grid">
+  <a class="tool-btn" href="tool.html">🔧 Upgrade Tool</a>
+  <a class="tool-btn" href="bottleneck.html">⚡ Bottleneck Calculator</a>
+  <a class="tool-btn" href="psu.html">🔌 PSU Calculator</a>
+  <a class="tool-btn" href="builder.html">💰 Budget PC Builder</a>
 </div>
 
 </div>
 </div>
-
-<script>
-
-/* CPU */
-function cpuScore(v){
-  v = (v||"").toLowerCase();
-  const num = parseInt(v.match(/(\d{4,5})/)?.[1]);
-  if(!num) return null;
-
-  let gen = Math.floor(num/1000);
-  let tier = v.includes("i9")||v.includes("9")?4:
-             v.includes("i7")||v.includes("7")?3:
-             v.includes("i5")||v.includes("5")?2:1;
-
-  return Math.min(100,(gen*7)+(tier*10));
-}
-
-/* GPU */
-function gpuScore(v){
-  v = (v||"").toLowerCase();
-  const num = parseInt(v.match(/(\d{3,4})/)?.[1]);
-  if(!num) return null;
-
-  let tier = v.includes("90")||v.includes("xtx")?4:
-             v.includes("80")||v.includes("xt")?3:
-             v.includes("70")?2:1;
-
-  return Math.min(100,(num/55)+(tier*12));
-}
-
-/* RAM */
-function ramScore(r,c,g){
-  const val = parseInt(r);
-  if(!val) return null;
-
-  const power = Math.max(c,g);
-
-  if(power >= 85){
-    if(val >= 32) return 95;
-    if(val >= 16) return 70;
-    return 30;
-  }
-
-  return val >= 16 ? 85 : 60;
-}
-
-/* AVG */
-function avg(a,b,c){
-  return Math.round((a+b+c)/3);
-}
-
-/* UPGRADE SIM */
-function simulate(part,c,g,r){
-  if(part==="CPU") return avg(95,g,r);
-  if(part==="GPU") return avg(c,95,r);
-  if(part==="RAM") return avg(c,g,90);
-}
-
-/* RECOMMEND */
-function recommend(part,b){
-  b = parseInt(b)||0;
-
-  if(part==="RAM"){
-    return b>=120?"32GB RAM":"16GB RAM";
-  }
-
-  if(part==="GPU"){
-    if(b>=500) return "RTX 4070 / RX 7800 XT";
-    if(b>=300) return "RTX 4060 / RX 7600";
-    return "Entry GPU upgrade";
-  }
-
-  if(part==="CPU"){
-    if(b>=300) return "Modern i5 / Ryzen 5";
-    return "Newer CPU generation";
-  }
-}
-
-/* UPGRADE PATH */
-function upgradePath(c,g,r,b){
-
-  let steps = [];
-
-  let parts = [
-    {n:"CPU",s:c},
-    {n:"GPU",s:g},
-    {n:"RAM",s:r}
-  ];
-
-  parts.sort((a,b)=>a.s-b.s);
-
-  for(let i=0;i<3;i++){
-    const p = parts[i].n;
-    steps.push("Step " + (i+1) + ": Upgrade " + p + " → " + recommend(p,b));
-  }
-
-  return steps.join("<br>");
-}
-
-/* MAIN */
-function analyze(){
-
-  const c = cpuScore(cpu.value);
-  const g = gpuScore(gpu.value);
-  const r = ramScore(ram.value,c,g);
-
-  if(!c || !g || !r){
-    textOutput.innerHTML = "Not recognised";
-    return;
-  }
-
-  const before = avg(c,g,r);
-
-  const parts = [
-    {n:"CPU",s:c},
-    {n:"GPU",s:g},
-    {n:"RAM",s:r}
-  ];
-
-  parts.sort((a,b)=>a.s-b.s);
-  const weak = parts[0].n;
-
-  const after = simulate(weak,c,g,r);
-
-  beforeBar.style.width = before + "%";
-  afterBar.style.width = after + "%";
-
-  textOutput.innerHTML =
-    "<b>Weakest Part:</b> " + weak +
-    "<br><b>Upgrade:</b> " + recommend(weak,budget.value);
-
-  pathOutput.innerHTML =
-    "<br><b>Upgrade Path:</b><br>" +
-    upgradePath(c,g,r,budget.value);
-}
-
-</script>
 
 </body>
 </html>
