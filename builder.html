@@ -3,14 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget PC Builder - PC Upgrade Picker</title>
+<title>Budget PC Builder</title>
 
 <style>
+
+/* RESET */
+* { box-sizing: border-box; }
+
+/* BODY */
 body {
   margin: 0;
   font-family: Arial;
   color: white;
   background: linear-gradient(135deg, #0f172a, #1e293b);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* BACKDROP */
@@ -31,26 +39,34 @@ body::before {
 
 /* NAV */
 nav {
+  height: 60px;
   background: #020617;
-  padding: 14px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
 nav a {
   color: #94a3b8;
-  margin: 0 12px;
   text-decoration: none;
   font-weight: bold;
 }
 
-/* LAYOUT */
+nav a:hover {
+  color: white;
+}
+
+/* CENTER */
 .wrapper {
-  min-height: calc(100vh - 60px);
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
+/* BOX */
 .container {
   width: 100%;
   max-width: 520px;
@@ -59,7 +75,8 @@ nav a {
   border-radius: 16px;
 }
 
-input, button, select {
+/* INPUT + BUTTON */
+input, button {
   width: 100%;
   padding: 12px;
   margin: 8px 0;
@@ -67,8 +84,27 @@ input, button, select {
   border: none;
 }
 
-input, select { background: #0f172a; color: white; }
-button { background: #3b82f6; color: white; font-weight: bold; }
+input {
+  background: #0f172a;
+  color: white;
+}
+
+button {
+  background: #3b82f6;
+  color: white;
+  font-weight: bold;
+}
+
+/* OUTPUT */
+#output {
+  margin-top: 15px;
+  line-height: 1.5;
+}
+
+/* MOBILE */
+@media (max-width: 600px){
+  .container { padding: 20px; }
+}
 
 </style>
 </head>
@@ -90,15 +126,10 @@ button { background: #3b82f6; color: white; font-weight: bold; }
 
 <h1>Budget PC Builder</h1>
 
-<input id="budget" placeholder="Enter budget (£)">
-<select id="use">
-  <option value="gaming">Gaming</option>
-  <option value="balanced">Balanced</option>
-</select>
+<input id="budget" placeholder="Enter Budget (£)">
+<button onclick="build()">Generate Build</button>
 
-<button onclick="build()">Build PC</button>
-
-<div id="output" style="margin-top:20px;"></div>
+<div id="output"></div>
 
 </div>
 </div>
@@ -114,54 +145,77 @@ function build(){
     return;
   }
 
-  let build = "";
+  let cpu, gpu, ram, storage, psu, extra;
 
-  /* LOW BUDGET */
-  if(b <= 500){
-    build = `
-    CPU: Ryzen 5 4500  
-    GPU: RX 6500 XT  
-    RAM: 16GB  
-    Storage: 500GB SSD  
-    PSU: 500W  
-    `;
+  /* ENTRY */
+  if(b <= 600){
+    cpu = "Ryzen 5 5500 / i3 12100F";
+    gpu = "RTX 3060 / RX 6600";
+    ram = "16GB DDR4";
+    storage = "1TB SSD";
+    psu = "550W PSU";
+    extra = "Basic motherboard + budget case";
   }
 
-  /* MID BUDGET */
+  /* LOW-MID */
   else if(b <= 900){
-    build = `
-    CPU: Ryzen 5 5600  
-    GPU: RTX 4060  
-    RAM: 16GB  
-    Storage: 1TB SSD  
-    PSU: 600W  
-    `;
+    cpu = "Ryzen 5 5600 / i5 12400F";
+    gpu = "RTX 4060 / RX 7600";
+    ram = "16GB DDR4";
+    storage = "1TB NVMe SSD";
+    psu = "600W PSU";
+    extra = "B550/B660 motherboard + airflow case";
   }
 
-  /* HIGH BUDGET */
-  else if(b <= 1400){
-    build = `
-    CPU: Ryzen 5 7600  
-    GPU: RTX 4070  
-    RAM: 32GB  
-    Storage: 1TB SSD  
-    PSU: 700W  
-    `;
+  /* MID (NEW GEN START) */
+  else if(b <= 1300){
+    cpu = "Ryzen 5 7600 / i5 13400F";
+    gpu = "RTX 5060 / RX 8600 XT";
+    ram = "32GB DDR5";
+    storage = "1TB NVMe SSD";
+    psu = "650W PSU";
+    extra = "DDR5 platform + decent cooling";
   }
 
-  /* VERY HIGH */
+  /* UPPER MID */
+  else if(b <= 1800){
+    cpu = "Ryzen 7 7700 / i5 14600K";
+    gpu = "RTX 5070 / RX 8800 XT";
+    ram = "32GB DDR5";
+    storage = "2TB NVMe SSD";
+    psu = "750W PSU";
+    extra = "High airflow case + strong cooling";
+  }
+
+  /* HIGH END */
+  else if(b <= 2500){
+    cpu = "Ryzen 7 7800X3D / i7 14700K";
+    gpu = "RTX 5080 / RX 8900 XTX";
+    ram = "32GB DDR5";
+    storage = "2TB NVMe SSD";
+    psu = "850W PSU";
+    extra = "Premium motherboard + AIO cooling";
+  }
+
+  /* ENTHUSIAST */
   else{
-    build = `
-    CPU: Ryzen 7 7800X3D  
-    GPU: RTX 4080  
-    RAM: 32GB  
-    Storage: 2TB SSD  
-    PSU: 850W  
-    `;
+    cpu = "Ryzen 9 7950X3D / i9 14900K";
+    gpu = "RTX 5090";
+    ram = "64GB DDR5";
+    storage = "2TB–4TB NVMe SSD";
+    psu = "1000W PSU";
+    extra = "Top-tier components + premium cooling";
   }
 
   output.innerHTML =
-    "<b>Recommended Build:</b><br><br>" + build;
+    "<b>Recommended Build:</b><br><br>" +
+    "CPU: " + cpu + "<br>" +
+    "GPU: " + gpu + "<br>" +
+    "RAM: " + ram + "<br>" +
+    "Storage: " + storage + "<br>" +
+    "PSU: " + psu + "<br>" +
+    "Other: " + extra +
+    "<br><br><i>Prices are estimated and may slightly exceed budget.</i>";
 }
 
 </script>
